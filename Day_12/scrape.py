@@ -24,42 +24,50 @@ def url_to_txt(url, filename="world.html", save=False):
 def parse_and_extract(url, name='2020'):
     html_text = url_to_txt(url)
     # 
+    if html_text == None:
+        return False
     r_html = HTML(html=html_text)
     table_class = ".imdb-scroll-table"
-    #table_class = "#table"
     r_table = r_html.find(table_class)
     # print(r_table)
     table_data = []
+    table_data_dicts = []
     header_names = []
 
-    if len(r_table) == 1:
-        parsed_table = r_table[0]
-        rows = parsed_table.find("tr") 
-        header_row = rows[0]
-        header_cols = header_row.find('th')
+    if len(r_table) == 0:
+        return False
+    parsed_table = r_table[0]
+    rows = parsed_table.find("tr") 
+    header_row = rows[0]
+    header_cols = header_row.find('th')
         # print(header_cols)
         # print(header_row)
-        header_names = [x.text for x in header_cols]
+    header_names = [x.text for x in header_cols]
         # print(header_names)
-        for row in rows[1:]:
+    for row in rows[1:]:
             # print(row.text)
-            cols = row.find("td")
-            row_data = []
-            for i, col in enumerate(cols):
+        cols = row.find("td")
+        row_data = []
+        row_dict_data = {}
+        # row_dict_data["%"]
+        for i, col in enumerate(cols):
                 # print(i, col.text, '\n\n')
+                header_name = header_names[i]
+                row_dict_data[header_name] = col.text
                 row_data.append(col.text)
-            table_data.append(row_data)
+        table_data.append(row_data)
+        table_data_dicts.append(row_dict_data)
             # i = 0
             # for x for row:
             #     i += 1
     #         #     print(i, x)
-        df = pd.DataFrame(table_data, columns=header_names)
-        path = os.path.join(BASE_DIR, 'data') 
-        os.makedirs(path, exist_ok=True)
-        filepath = os.path.join('data', f'{name}.csv')
-        df.to_csv(filepath, index=False)
+    df = pd.DataFrame(table_data, columns=header_names)
+    path = os.path.join(BASE_DIR, 'data') 
+    os.makedirs(path, exist_ok=True)
+    filepath = os.path.join('data', f'{name}.csv')
+    df.to_csv(filepath, index=False)
 
-def run(start_year=None, years_ago=10):
+def run(start_year=None, years_ago=1):
     if start_year == None:
         now = datetime.datetime.now()
         start_year = now.year
@@ -72,8 +80,12 @@ def run(start_year=None, years_ago=10):
         url = f"https://www.boxofficemojo.com/year/world/{start_year}/"
         parse_and_extract(url, name=start_year)
         print(f"Finished {start_year}")
+        if finished:
+            print(f"Finished {start_year}")
+        else: 
+            print(f"{start_year} not finished")
         start_year -= 1
-
+        
 if __name__ == "__main__":
     start, count = sys.argv[1], sys.argv[2]
     
